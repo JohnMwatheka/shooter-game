@@ -1,8 +1,8 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 500;
-canvas.height = 600;
+canvas.width = window.innerWidth < 500 ? window.innerWidth - 20 : 500; // Responsive width
+canvas.height = window.innerHeight < 600 ? window.innerHeight - 20 : 600; // Responsive height
 
 // Game Variables
 let gunX = canvas.width / 2 - 25;
@@ -16,19 +16,41 @@ let gameOver = false;
 
 // Mouse Move Event - Gun follows mouse position
 canvas.addEventListener("mousemove", (event) => {
-    if (gameOver) return; // Stop movement if game is over
+    if (gameOver) return;
 
     const rect = canvas.getBoundingClientRect();
-    gunX = event.clientX - rect.left - 25; // Center gun at mouse position
+    gunX = event.clientX - rect.left - 25;
 
     // Keep gun within bounds
     if (gunX < 0) gunX = 0;
     if (gunX > canvas.width - 50) gunX = canvas.width - 50;
 });
 
+// Touch Support for Mobile - Move gun
+canvas.addEventListener("touchmove", (event) => {
+    if (gameOver) return;
+
+    const touch = event.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    gunX = touch.clientX - rect.left - 25;
+
+    // Keep gun within bounds
+    if (gunX < 0) gunX = 0;
+    if (gunX > canvas.width - 50) gunX = canvas.width - 50;
+
+    event.preventDefault();
+});
+
+// Touch to Fire Bullet (for mobile)
+canvas.addEventListener("touchstart", () => {
+    if (!gameOver) {
+        bullets.push({ x: gunX + 20, y: canvas.height - 60, width: 5, height: 10 });
+    }
+});
+
 // Function to spawn falling objects
 function spawnFallingObject() {
-    if (gameOver) return; // Stop spawning objects after game over
+    if (gameOver) return;
 
     let x = Math.random() * (canvas.width - 30);
     fallingObjects.push({ x, y: 0, width: 30, height: 30 });
@@ -46,20 +68,15 @@ function endGame() {
     gameOver = true;
     clearInterval(bulletInterval); // Stop bullet shooting
 
-    // Display "Game Over" message
+    // Display "Game Over" message for 5 seconds
     ctx.fillStyle = "red";
     ctx.font = "30px Arial";
     ctx.fillText("Game Over!", canvas.width / 2 - 80, canvas.height / 2 - 20);
     ctx.font = "20px Arial";
-    ctx.fillText("Click to Restart", canvas.width / 2 - 75, canvas.height / 2 + 20);
-}
+    ctx.fillText("Restarting in 5s...", canvas.width / 2 - 90, canvas.height / 2 + 20);
 
-// Restart Game on Click
-canvas.addEventListener("click", () => {
-    if (gameOver) {
-        restartGame();
-    }
-});
+    setTimeout(restartGame, 5000); // Restart after 5 seconds
+}
 
 // Function to Restart Game
 function restartGame() {
